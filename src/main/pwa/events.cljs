@@ -95,21 +95,20 @@
 
 (rf/reg-event-fx
   :obtain-token-success
-  (fn [{:keys [db]} [_ {body :body}]]
-    (let [state (random-uuid)]
-      (prn "obtain-token0sucess" body)
-      {:storage/set {}})
-    ))
+  (fn [{:keys [db]} [_ {{:keys [access_token refresh_token]} :body}]]
+    {:storage/set {:access-token access_token
+                   :refresh-token refresh_token}}))
 
 (rf/reg-event-fx
   :obtain-token
   (fn [{:keys [db]} [_ code]]
     {:fetch {:method                 :post
              :url                    (get-item :token-endpoint)
-             :body (js/JSON.stringify (clj->js {:client_id (get-item :client-id),
-                                                :client_secret (get-item :client-secret),
-                                                :code code,
-                                                :grant_type "authorization_code"}))
+             :body {:client_id (get-item :client-id),
+                    :client_secret (get-item :client-secret),
+                    :code code,
+                    :grant_type "authorization_code"}
+             :response-content-types {#"application/.*json" :json}
              :request-content-type   :json
              :mode                   :cors
              :timeout                5000
